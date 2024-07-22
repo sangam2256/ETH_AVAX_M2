@@ -2,7 +2,7 @@ import {useState,useEffect} from "react";
 import {ethers} from "ethers";
 import crypto_making_tree_abi from "../artifacts/contracts/MySmartContract.sol/SmartContract_with_Front_end_interaction.json";
 
-export default function Homepage() {
+export default function Homepage() { 
 
     const [meMessage,setMeMessage] = useState("Account Holder Name : Sangam ");
     const [defaultAccount,setDefaultAccount] = useState(undefined);
