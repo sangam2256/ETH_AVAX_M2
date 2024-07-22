@@ -1,7 +1,7 @@
 # Project: Function Frontend of Smart Contract Management
 
 This project contains code to practice interacting with the  smart contract through a website.
-
+ 
 ## Description
 
 The files `index.js`, `MySmartContract.sol`, and `deploy.js` contain the necessary code to interact with the  smart contract through a front-end interface..
