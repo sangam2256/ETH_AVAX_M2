@@ -1,44 +1,18 @@
-# Project: Function Frontend of Smart Contract Management
+Write the code and create .sol, deploy.js, and index.js file.
 
-This project contains code to practice interacting with the  smart contract through a website.
- 
-## Description
+Inside the project directory, in the terminal type:
+```npm i```
 
-The files `index.js`, `MySmartContract.sol`, and `deploy.js` contain the necessary code to interact with the  smart contract through a front-end interface..
+Open two additional terminals in your VS code
 
-## Executing the project
+In the second terminal type: ```npx hardhat node```
 
-To run the project on your local machine, follow these steps:
+now in  third terminal, type: ```npx hardhat run --network localhost scripts/deploy.js```
 
-1. Clone this repository or download the ZIP file and extract it.
-   
-3. Inside the project directory, open a terminal and run `npm i`.
+Again in the first terminal, type ```npm run dev``` , this will launch it in the front-end.
 
-4. Open two additional terminals in your preferred code editor.
+Now click on localhost link shown in the terminal 
+Typically at http://localhost:3000/
+connect metamask wallet and perform the tasks.
 
-5. In the second terminal, run `npx hardhat node` to start the local Ethereum node.
-
-6. In the third terminal, run `npx hardhat run --network localhost scripts/deploy.js` to deploy the smart contract to the local network.
-
-7. Back in the first terminal, run `npm run dev` to launch the front-end application.
-
-After following these steps, the project will be running on your local host, typically at http://localhost:3000/ . Make sure you have MetaMask connected to the local network you set up in order to interact with the smart contract through the front-end interface.
-
-## Setting up the Local Network and MetaMask
-
-To connect MetaMask with the local network, follow these steps:
-
-1. Install the MetaMask browser extension. Click on the MetaMask extension in your browser.
-2. Click on the network selection button in the top right corner.
-3. Select "Add Network" and then "Custom RPC".
-4. Provide a network name of your choice.
-5. Set the RPC URL to `http://127.0.0.1:8545`.
-6. Set the Chain ID to `31337`.
-7. Set the Currency Symbol to `ETH`.
-8. Save the network configuration.
-
-Now you can interact with the smart contract through the front-end application using your MetaMask wallet connected to the local network.
-
----
-
-Make sure to follow the instructions carefully and have the necessary dependencies installed to run the project successfully. Happy interacting with your smart contract!
+This was all about this project.
