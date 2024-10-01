@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { ethers } from "ethers";
-import BikeSharingSystemAbi from "../artifacts/contracts/BikeSharingSystem.sol/BikeSharingSystem.json";
+import AdvancedBikeSharingSystemAbi from "../artifacts/contracts/AdvancedBikeSharingSystem.sol/AdvancedBikeSharingSystem.json";
 
 export default function HomePage() {
   const [ethWallet, setEthWallet] = useState(undefined);
@@ -10,9 +10,11 @@ export default function HomePage() {
   const [message, setMessage] = useState("");
   const [bikeModel, setBikeModel] = useState("");
   const [bikeId, setBikeId] = useState("");
+  const [rentalDuration, setRentalDuration] = useState(1); // Default rental duration
+  const [ownerEarnings, setOwnerEarnings] = useState(0);
 
-  const contractAddress = "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512"; // Update with your contract address
-  const BikeSharingSystemABI = BikeSharingSystemAbi.abi;
+  const contractAddress = "0x5FbDB2315678afecb367f032d93F642f64180aa3"; // Update with your contract address
+  const BikeSharingSystemABI = AdvancedBikeSharingSystemAbi.abi;
 
   const getWallet = async () => {
     if (window.ethereum) {
@@ -59,7 +61,7 @@ export default function HomePage() {
     setMessage("");
     if (BikeSharingSystem) {
       try {
-        let tx = await BikeSharingSystem.addBike(bikeModel);
+        let tx = await BikeSharingSystem.addBike(bikeModel, ethers.utils.parseEther("1")); // default price per hour, change if needed
         await tx.wait();
         setMessage("Bike added successfully!");
       } catch (error) {
@@ -72,16 +74,22 @@ export default function HomePage() {
     setMessage("");
     if (BikeSharingSystem) {
       try {
-        let tx = await BikeSharingSystem.rentBike(bikeId);
+        const bikeDetails = await BikeSharingSystem.checkBikeAvailability(bikeId);
+        const pricePerHour = bikeDetails[2]; // extract pricePerHour from response
+        let totalCost = pricePerHour.mul(rentalDuration); // calculate total cost based on duration
+        let tx = await BikeSharingSystem.rentBike(bikeId, rentalDuration, { value: totalCost });
         await tx.wait();
         checkBikeAvailability(bikeId);
         setMessage("Bike rented successfully!");
+        
+        // Refresh earnings after renting
+        await getOwnerEarnings();
       } catch (error) {
         setMessage("Unable to rent bike: " + (error.message || error));
       }
     }
   };
-
+  
   const returnBike = async () => {
     setMessage("");
     if (BikeSharingSystem) {
@@ -90,8 +98,25 @@ export default function HomePage() {
         await tx.wait();
         checkBikeAvailability(bikeId);
         setMessage("Bike returned successfully!");
+        
+        // Refresh earnings after returning
+        await getOwnerEarnings();
       } catch (error) {
         setMessage("Unable to return bike: " + (error.message || error));
+      }
+    }
+  };
+  
+
+  const withdrawEarnings = async () => {
+    setMessage("");
+    if (BikeSharingSystem) {
+      try {
+        let tx = await BikeSharingSystem.withdrawEarnings();
+        await tx.wait();
+        setMessage("Earnings withdrawn successfully!");
+      } catch (error) {
+        setMessage("Unable to withdraw earnings: " + (error.message || error));
       }
     }
   };
@@ -99,11 +124,22 @@ export default function HomePage() {
   const checkBikeAvailability = async (bikeId) => {
     try {
       if (BikeSharingSystem) {
-        const [bikeModel, isRented] = await BikeSharingSystem.checkBikeAvailability(bikeId);
-        setBikeAvailability((prev) => ({ ...prev, [bikeId]: { bikeModel, isRented } }));
+        const [bikeModel, isRented, pricePerHour, owner] = await BikeSharingSystem.checkBikeAvailability(bikeId);
+        setBikeAvailability((prev) => ({ ...prev, [bikeId]: { bikeModel, isRented, pricePerHour, owner } }));
       }
     } catch (error) {
       setMessage("Error fetching bike availability: " + (error.message || error));
+    }
+  };
+
+  const getOwnerEarnings = async () => {
+    try {
+      if (BikeSharingSystem) {
+        const earnings = await BikeSharingSystem.earnings(account);
+        setOwnerEarnings(ethers.utils.formatEther(earnings));
+      }
+    } catch (error) {
+      setMessage("Error fetching earnings: " + (error.message || error));
     }
   };
 
@@ -134,7 +170,13 @@ export default function HomePage() {
             value={bikeId}
             onChange={(e) => setBikeId(e.target.value)}
           />
-          <button onClick={rentBike}>SHARE Bike</button>
+          <input
+            type="number"
+            placeholder="Rental Duration (hours)"
+            value={rentalDuration}
+            onChange={(e) => setRentalDuration(e.target.value)}
+          />
+          <button onClick={rentBike}>Rent Bike</button>
           <button onClick={returnBike}>Return Bike</button>
 
           <div className="bike-info">
@@ -142,11 +184,16 @@ export default function HomePage() {
               <div key={bikeId}>
                 <p>Bike ID: {bikeId}</p>
                 <p>Model: {bikeAvailability[bikeId].bikeModel}</p>
+                <p>Price Per Hour: {ethers.utils.formatEther(bikeAvailability[bikeId].pricePerHour)} ETH</p>
                 <p>Status: {bikeAvailability[bikeId].isRented ? "Rented" : "Available"}</p>
+                <p>Owner: {bikeAvailability[bikeId].owner}</p>
                 <button onClick={() => checkBikeAvailability(bikeId)}>Check Bike Availability</button>
               </div>
             ))}
           </div>
+
+          <p>Your Earnings: {ownerEarnings} ETH</p>
+          <button onClick={withdrawEarnings}>Withdraw Earnings</button>
         </div>
         {message && <p><strong>{message}</strong></p>}
       </div>
@@ -155,24 +202,31 @@ export default function HomePage() {
 
   useEffect(() => {
     getWallet();
-  }, []);
+    if (account) {
+      getOwnerEarnings();
+    }
+  }, [account]);
 
   return (
     <main className="container">
       <header>
-        <h1>Welcome to Bike Sharing System</h1>
+        <h1>Welcome to Advance Bike Sharing System</h1>
       </header>
       {initUser()}
       <style jsx>{`
-        .container {
+      
+         .container {
           text-align: center;
           background-color: white;
-          color: olive green;
+          color: black;
           font-family: "Times New Roman", serif;
           border: 10px solid black;
           border-radius: 20px;
-          background-image: url("https://i.pinimg.com/originals/67/77/25/677725dec541ac6d103ceb77a512db39.jpg");
-          height: 950px;
+          background-image: url("https://i.pinimg.com/originals/41/9b/76/419b764b109196b16cfb7320882c27c7.png");
+          background-size: cover;
+          background-position: center;
+          background-repeat: no-repeat;
+          height: 850px;
           width: 1500px;
           opacity: 0.9;
           font-weight: 1000;
@@ -189,7 +243,7 @@ export default function HomePage() {
           margin-bottom: 20px;
         }
 
-        .bike-info {
+        .task-info {
           display: flex;
           flex-direction: column;
           gap: 20px;
@@ -199,8 +253,8 @@ export default function HomePage() {
           background-color: #4caf50;
           color: white;
           border: none;
-          padding: 20px 30px;
-          font-size: 24px;
+          padding: 15px 25px;
+          font-size: 22px;
           cursor: pointer;
           border-radius: 8px;
           box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
@@ -213,3 +267,5 @@ export default function HomePage() {
     </main>
   );
 }
+
+        
